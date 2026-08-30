@@ -21,7 +21,7 @@ import z from "schemastery"
 import {
   LlmAdapter,
   LlmError,
-  CallId,
+  ToolCallId,
   ReasoningEffortId,
   attributionHeaders,
   contentHasImage,
@@ -31,7 +31,6 @@ import {
   isQuotaExceededError,
   isContextWindowExceededError,
 } from "@deepseek-ai/dsh-llm"
-import { installSettingsSection, settingsNamespace } from "@deepseek-ai/dsh-settings"
 import {
   computeNextModels,
   loadCache,
@@ -44,7 +43,7 @@ export const name = "@dsh-external/dsh-llm-opencode-zen"
 export const inject = ["llm"]
 
 const PROVIDER = "opencode-zen"
-const NS = settingsNamespace("llm-opencode-zen")
+const NS = "llm-opencode-zen"
 const DISPLAY_NAME = "OpenCode Zen"
 const OFF = ReasoningEffortId("off")
 const LOW = ReasoningEffortId("low")
@@ -240,7 +239,7 @@ function closeBlock(block: OpenBlock): any {
     case "tool-call":
       return {
         type: "tool-call",
-        id: CallId(block.callId ?? ""),
+        id: ToolCallId(block.callId ?? ""),
         name: block.name ?? "",
         arguments: block.text,
       }
@@ -660,14 +659,16 @@ export function apply(ctx: any, entry: Config): void {
   }
 
   // 设置区：模型只读（无模型字段），供应商开关 + 可选 key + 同步参数
-  installSettingsSection(ctx, NS, Config, entry, {
-    setSource: (source: () => Config) => {
-      current = source
-    },
-    onChange: () => {
-      refresh("settings")
-      scheduleTimer()
-    },
+  ctx.inject(['settings'], (settingsCtx) => {
+    settingsCtx.settings.installSection(ctx, NS, Config, entry, {
+      setSource: (source: () => Config) => {
+        current = source
+      },
+      onChange: () => {
+        refresh("settings")
+        scheduleTimer()
+      },
+    })
   })
 
   // 首次注册 + 启动同步
