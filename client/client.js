@@ -11,7 +11,14 @@ window.__ModuleLoader__.load({
 		Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
 
 		let react = require("react");
-		let runtime = require("@deepseek-ai/dsh-client-runtime/client");
+		const storeKey = ["@deepseek-ai/dsh-client", "-store"].join("");
+		const legacyKey = ["@deepseek-ai/dsh-client-runtime", "/client"].join("");
+		let runtime;
+		try {
+			runtime = require(storeKey);
+		} catch {
+			runtime = require(legacyKey);
+		}
 
 		/** Settings namespace owned by the host half. */
 		const NS = "llm-opencode-zen";
